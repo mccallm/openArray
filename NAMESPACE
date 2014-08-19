@@ -1,0 +1,6 @@
+importFrom(utils, citation, toBibtex)
+importFrom(parallel, makeForkCluster, clusterApplyLB, stopCluster)
+
+export(processQPCR)
+
+
