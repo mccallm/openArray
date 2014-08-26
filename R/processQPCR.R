@@ -16,14 +16,35 @@ processQPCR <- function(filename,fileFormat="default") {
   }
 
   d = d[,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id","Cycle","Value")];    
+  d = d[order(d$Chip.Id,d$Chip.Well,d$Sample.Id,d$Feature.Set,d$Feature.Id),];
+  print("done sorting");
   
   #Some basic error check
   if(is.null(d$Value)){
     stop("Error: You must have a Value column for the raw fluorescence values.");
   }
 
-  # find unique data series records  
-  u = unique(d[,c("Chip.Id","Chip.Well","Sample.Id","Feature.Id","Feature.Set")])
+  nRecords = nrow(d);
+  b = list();
+  c = d[1,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")];
+  j = 1;
+  i = 1;
+  
+  while (i <= nRecords) {
+  	b[[j]] = list("Chip.Id"=c$Chip.Id,"Chip.Well"=c$Chip.Well,"Sample.Id"=c$Sample.Id,"Feature.Set"=c$Feature.Set,"Feature.Id"=c$Feature.Id);
+  	while ((i <= nRecords) & (prod(c == d[i,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")])==1)) {
+  		b[[j]]$x = c(b[[j]]$x,d$Cycle[i]);
+  		b[[j]]$y = c(b[[j]]$y,d$Value[i]);
+  		i = i+1;
+  	}
+  	b[[j]]$SST = sum((b[[j]]$y-mean(b[[j]]$y))^2);
+	yRange = as.numeric(quantile(b[[j]]$y,c(0.1,0.9)));
+	b[[j]]$init = c(yRange[1],yRange[2]-yRange[1],which.min(abs(mean(yRange)-b[[j]]$y)),0.5,1);
+	
+	c = d[i,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")];
+	j = j+1;
+  }
+  rm(d);
   
   # modeling constraints
   Cstr = list();
@@ -37,32 +58,24 @@ processQPCR <- function(filename,fileFormat="default") {
   Cstr$U[6,] = c(0,1,0,0,0); Cstr$C[6,1] = 0.001; # amplitude of pcr reaction must be > 0
 
   # For all ChipID x ChipWell combinations
-  bSize = 100;
-  nRecords = nrow(u);
-  nodes = makeForkCluster(nnodes=3);
-  for (i in seq(1,nRecords,bSize)) {
-    b = list();
-    print(i/nRecords)
-    for (j in 1:min(bSize,nRecords-i+1)) {
-      b[[j]] = list();
-      idx = which((d$Chip.Id==u[i+j-1,]$Chip.Id)&(d$Chip.Well==u[i+j-1,]$Chip.Well)&(d$Sample.Id==u[i+j-1,]$Sample.Id)&(d$Feature.Id==u[i+j-1,]$Feature.Id)&(d$Feature.Set==u[i+j-1,]$Feature.Set));
-      b[[j]]$x = d$Cycle[idx];
-      b[[j]]$y = d$Value[idx];
-      b[[j]]$SST = sum((b[[j]]$y-mean(b[[j]]$y))^2);
-      yRange = as.numeric(quantile(b[[j]]$y,c(0.1,0.9)));
-      b[[j]]$init = c(yRange[1],yRange[2]-yRange[1],which.min(abs(mean(yRange)-b[[j]]$y)),0.5,1);
-    }
-    m = clusterApplyLB(cl=nodes,x=b,fun=modelQPCR,Cstr=Cstr);
-    for (j in 1:min(bSize,nRecords-i+1)) {
-      u[i+j-1,"p1"] = m[[j]]$modelFit$parameters[1];
-      u[i+j-1,"p2"] = m[[j]]$modelFit$parameters[2];
-      u[i+j-1,"p3"] = m[[j]]$modelFit$parameters[3];
-      u[i+j-1,"p4"] = m[[j]]$modelFit$parameters[4];
-      u[i+j-1,"p5"] = m[[j]]$modelFit$parameters[5];
-      u[i+j-1,"r2"] = m[[j]]$modelFit$Rsq;
-    }
-  }
+  nodes = makeForkCluster(nnodes=6);
+  m = clusterApplyLB(cl=nodes,x=b,fun=modelQPCR,Cstr=Cstr);
   stopCluster(nodes);
+  
+  u = data.frame();
+  for (j in 1:length(b)) {
+      u[j,"Chip.Id"] = b[[j]]$Chip.Id;
+      u[j,"Chip.Well"] = b[[j]]$Chip.Well;
+      u[j,"Sample.Id"] = b[[j]]$Sample.Id;
+      u[j,"Feature.Set"] = b[[j]]$Feature.Set;
+      u[j,"Feature.Id"] = b[[j]]$Feature.Id;
+      u[j,"p1"] = m[[j]]$modelFit$parameters[1];
+      u[j,"p2"] = m[[j]]$modelFit$parameters[2];
+      u[j,"p3"] = m[[j]]$modelFit$parameters[3];
+      u[j,"p4"] = m[[j]]$modelFit$parameters[4];
+      u[j,"p5"] = m[[j]]$modelFit$parameters[5];
+      u[j,"r2"] = m[[j]]$modelFit$Rsq;
+  }
   
   return(u);
 }
