@@ -1,15 +1,14 @@
 \name{processQPCR}
 \alias{processQPCR}
-\title{Processing of OpenArray Amplification Curves}
+\title{Processing of OpenArray Amplification Data}
 \description{
-  This function fits a 5 parameter curve to amplification curves from the OpenArray platform and returns expression estimates and quality scores.
+  This function fits a 5 parameter curve to qPCR amplification measurements from the OpenArray platform and returns expression estimates and quality scores.
 }
 \usage{
-  processQPCR(filename, fileFormat="default")
+  processQPCR(dat)
 }
 \arguments{
-  \item{filename}{the name of the file containing the raw data}
-  \item{fileFormat}{the format of the raw data file. Current options are "default" or "LifeTech"}
+  \item{dat}{a data.frame containing the amplification measurements}
 }
 \value{
   The function returns an HTqPCR object containing expression estimates and quality scores.
