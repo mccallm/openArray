@@ -1,5 +1,5 @@
 Package: openArray
-Version: 0.0.2
+Version: 0.0.3
 Date: 2014-08-27
 Title: Tools for the OpenArray Platform
 Description: Quantification and quality assessment of microRNA expression from the OpenArray platform using a curve-fitting algorithm. 
