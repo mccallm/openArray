@@ -15,7 +15,8 @@
 }
 \author{Alexander Baras and Matthew N. McCall}
 \examples{
-
+   data(exampleData)
+   obj <- processQPCR(exampleData)
 }
 \keyword{manip}
 
