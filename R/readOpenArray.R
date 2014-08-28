@@ -16,32 +16,31 @@ readOpenArray <- function(filename, fileFormat="default") {
   }
 
   d = d[,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id","Cycle","Value")];    
-  d = d[order(d$Chip.Id,d$Chip.Well,d$Sample.Id,d$Feature.Set,d$Feature.Id),];
+##  d = d[order(d$Chip.Id,d$Chip.Well,d$Sample.Id,d$Feature.Set,d$Feature.Id),];
 
   #Some basic error check
   if(is.null(d$Value)){
     stop("Error: You must have a Value column for the raw fluorescence values.");
   }
-
-  nRecords = nrow(d)
-  dat = list()
-  c = d[1,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")]
-  j = 1
-  i = 1
   
-  while (i <= nRecords) {
-  	dat[[j]] = list("Chip.Id"=c$Chip.Id,"Chip.Well"=c$Chip.Well,"Sample.Id"=c$Sample.Id,"Feature.Set"=c$Feature.Set,"Feature.Id"=c$Feature.Id)
-  	while ((i <= nRecords) & (prod(c == d[i,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")])==1)) {
-  		dat[[j]]$x = c(dat[[j]]$x,d$Cycle[i])
-  		dat[[j]]$y = c(dat[[j]]$y,d$Value[i])
-  		i = i+1
-  	}
-  	dat[[j]]$SST = sum((dat[[j]]$y-mean(dat[[j]]$y))^2)
-	  yRange = as.numeric(quantile(dat[[j]]$y,c(0.1,0.9)))
-	  dat[[j]]$init = c(yRange[1],yRange[2]-yRange[1],which.min(abs(mean(yRange)-dat[[j]]$y)),0.5,1)
-	
-  	c = d[i,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")]
-	  j = j+1
-  }
+  tmp <- split(d,paste(d$Chip.Id,d$Chip.Well,d$Sample.Id,d$Feature.Set,d$Feature.Id,sep="::"))
+  dat <- lapply(tmp, function(x){
+    obj <- list()
+    ## we don't really need the following, it's all in the names of the list
+    ## but for now keep it for error checking
+    obj$Chip.Id <- as.character(x$Chip.Id[1])
+    obj$Chip.Well <- as.character(x$Chip.Well[1])
+    obj$Sample.Id <- as.character(x$Sample.Id[1])
+    obj$Feature.Set <- as.character(x$Feature.Set[1])
+    obj$Feature.Id <- as.character(x$Feature.Id[1])
+    ## the following we will always need
+    obj$x <- x$Cycle
+    obj$y <- x$Value
+  	obj$SST = sum((obj$y-mean(obj$y))^2)
+	  yRange = as.numeric(quantile(obj$y,c(0.1,0.9)))
+	  obj$init = c(yRange[1],yRange[2]-yRange[1],which.min(abs(mean(yRange)-obj$y)),0.5,1)
+    return(obj)
+  })
+
   return(dat)
 }
