@@ -1,32 +1,5 @@
 processQPCR <- function(dat) {
 
-  #Some basic error check
-  if(is.null(dat$Value)){
-    stop("Error: You must have a Value column for the raw fluorescence values.")
-  }
-
-  nRecords = nrow(dat)
-  b = list()
-  c = dat[1,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")]
-  j = 1
-  i = 1
-  
-  while (i <= nRecords) {
-  	b[[j]] = list("Chip.Id"=c$Chip.Id,"Chip.Well"=c$Chip.Well,"Sample.Id"=c$Sample.Id,"Feature.Set"=c$Feature.Set,"Feature.Id"=c$Feature.Id)
-  	while ((i <= nRecords) & (prod(c == dat[i,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")])==1)) {
-  		b[[j]]$x = c(b[[j]]$x,dat$Cycle[i])
-  		b[[j]]$y = c(b[[j]]$y,dat$Value[i])
-  		i = i+1
-  	}
-  	b[[j]]$SST = sum((b[[j]]$y-mean(b[[j]]$y))^2)
-	yRange = as.numeric(quantile(b[[j]]$y,c(0.1,0.9)))
-	b[[j]]$init = c(yRange[1],yRange[2]-yRange[1],which.min(abs(mean(yRange)-b[[j]]$y)),0.5,1)
-	
-	c = dat[i,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")]
-	j = j+1
-  }
-  rm(dat)
-
   # modeling constraints
   Cstr = list()
   Cstr$U = matrix(NA,6,5)
@@ -40,7 +13,7 @@ processQPCR <- function(dat) {
 
   # For all ChipID x ChipWell combinations
   nodes = makeForkCluster(nnodes=6)
-  m = clusterApplyLB(cl=nodes,x=b,fun=modelQPCR,Cstr=Cstr)
+  m = clusterApplyLB(cl=nodes,x=dat,fun=modelQPCR,Cstr=Cstr)
   stopCluster(nodes)
   
   u = data.frame()
