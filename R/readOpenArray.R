@@ -22,6 +22,26 @@ readOpenArray <- function(filename, fileFormat="default") {
   if(is.null(d$Value)){
     stop("Error: You must have a Value column for the raw fluorescence values.");
   }
+
+  nRecords = nrow(dat)
+  dat = list()
+  c = d[1,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")]
+  j = 1
+  i = 1
   
-  return(d)
+  while (i <= nRecords) {
+  	dat[[j]] = list("Chip.Id"=c$Chip.Id,"Chip.Well"=c$Chip.Well,"Sample.Id"=c$Sample.Id,"Feature.Set"=c$Feature.Set,"Feature.Id"=c$Feature.Id)
+  	while ((i <= nRecords) & (prod(c == d[i,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")])==1)) {
+  		dat[[j]]$x = c(dat[[j]]$x,d$Cycle[i])
+  		dat[[j]]$y = c(dat[[j]]$y,d$Value[i])
+  		i = i+1
+  	}
+  	dat[[j]]$SST = sum((dat[[j]]$y-mean(dat[[j]]$y))^2)
+	  yRange = as.numeric(quantile(dat[[j]]$y,c(0.1,0.9)))
+	  dat[[j]]$init = c(yRange[1],yRange[2]-yRange[1],which.min(abs(mean(yRange)-dat[[j]]$y)),0.5,1)
+	
+  	c = d[i,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")]
+	  j = j+1
+  }
+  return(dat)
 }
