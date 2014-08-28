@@ -23,7 +23,7 @@ readOpenArray <- function(filename, fileFormat="default") {
     stop("Error: You must have a Value column for the raw fluorescence values.");
   }
 
-  nRecords = nrow(dat)
+  nRecords = nrow(d)
   dat = list()
   c = d[1,c("Chip.Id","Chip.Well","Sample.Id","Feature.Set","Feature.Id")]
   j = 1
