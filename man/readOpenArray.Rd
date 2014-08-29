@@ -19,7 +19,7 @@
 \author{Alexander Baras and Matthew N. McCall}
 \examples{
   dat <- readOpenArray(
-             system.file("data/exampleData.csv", package = "openArray"),
+             system.file("extdata/rawData.csv", package = "openArray"),
              fileFormat="LifeTech" ) 
 }
 \keyword{manip}
