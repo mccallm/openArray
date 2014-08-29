@@ -1,13 +1,15 @@
-readOpenArray <- function(filename, fileFormat="default") {
+readOpenArray <- function(filename) {
 
-  # read in raw data table
-  if (fileFormat=="default") {
-    d <- read.table(filename, header=TRUE, dec=".", sep=",", comment.char="")
-  } else if (fileFormat=="LifeTech") {
-    d <- read.table(filename, skip=15, header=TRUE, dec=".", sep=",", comment.char="")
+  tmp <- readLines(filename, n=50)
+  iStart <- grep("\"Experiment Name\"",tmp)
+    
+    d <- read.table(filename, skip=iStart-1, header=TRUE, dec=".", sep=",", comment.char="")
     names(d)[names(d)=="Barcode"] <- "Chip.Id"
     names(d)[names(d)=="Well"] <- "Chip.Well"
-    d[,c("Sample.Id","Feature.Set")] <- read.table(text=as.character(d$Sample.Name),sep='_')
+    snames <- as.character(d$Sample.Name)
+    nsnames <- nchar(snames)
+    d[,"Sample.Id"] <- gsub(".$","",snames)
+    d[,"Feature.Set"] <- substr(snames,nsnames,nsnames)
     names(d)[names(d)=="Target.Name"] <- "Feature.Id"
     names(d)[names(d)=="Cycle.Number"] <- "Cycle"
     names(d)[names(d)=="Rn"] <- "Value"
