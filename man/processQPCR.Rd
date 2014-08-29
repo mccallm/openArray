@@ -16,8 +16,7 @@
 \author{Alexander Baras and Matthew N. McCall}
 \examples{
   dat <- readOpenArray(
-             system.file("extdata/rawData.csv", package = "openArray"),
-             fileFormat="LifeTech" ) 
+             system.file("extdata/rawData.csv", package = "openArray")) 
    obj <- processQPCR(dat)
 }
 \keyword{manip}
