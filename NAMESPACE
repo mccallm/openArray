@@ -1,5 +1,16 @@
 importFrom(utils, citation, toBibtex)
 importFrom(parallel, makeForkCluster, clusterApplyLB, stopCluster)
+importClassesFrom(Biobase, AnnotatedDataFrame, AssayData, eSet,
+                  ExpressionSet, MIAME, Versioned, VersionedBiobase,
+                  Versions)
+importClassesFrom(methods, character, matrix)
+importMethodsFrom(methods, initialize)
+importMethodsFrom(Biobase, annotatedDataFrameFrom, exprs, se.exprs, "se.exprs<-", annotation, sampleNames)
+
+importFrom(Biobase, assayDataElement, assayDataElementReplace, assayDataNew, pData)
+importFrom(methods, is, callNextMethod, new, setAs, as)
+
+import(HTqPCR)
 
 export(processQPCR,readOpenArray)
 

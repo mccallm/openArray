@@ -31,5 +31,37 @@ processQPCR <- function(dat) {
       u[j,"r2"] = m[[j]]$modelFit$Rsq
   }
   
-  return(u)
+  ## tranform to standard miRNA x sample matrix format
+  cols <- u$Sample.Id
+  tmp <- split(u,cols)
+  ## order each col by the Feature.Id
+  tmp <- lapply(tmp, function(x) x[order(x$Feature.Id),])
+  ## merge cols to create data matrices
+  e <- fc <- matrix(nrow=length(tmp[[1]]$Feature.Id),ncol=length(tmp))
+  for(k in 1:ncol(e)){
+    e[,k] <- tmp[[k]]$p3
+    fc[,k] <- tmp[[k]]$r2
+  }
+  rownames(e) <- rownames(fc) <- tmp[[1]]$Feature.Id
+  colnames(e) <- colnames(fc) <- names(tmp)
+  
+  ## we may need to change this later to flag controls
+  ft <- rep("Target",nrow(e))  
+  
+  fl <- matrix("Passed",nrow=nrow(e),ncol=ncol(e))
+  fl[which(fc<0.99,arr.ind=TRUE)] <- "Flagged"
+  colnames(fl) <- colnames(e)
+  rownames(fl) <- rownames(e)
+  
+  obj <- new("qPCRset", exprs=e, flag=fl)
+  featureNames(obj) <- rownames(e)
+  featureType(obj) <- ft
+  featureCategory(obj) <- as.data.frame(fc)
+  
+  tab <- data.frame(sampleName=names(tmp), 
+                    chipID=unlist(lapply(tmp,function(x) x$Chip.Id[1]))
+  )
+  phenoData(obj) <- AnnotatedDataFrame(data=tab)
+  
+  return(obj)
 }

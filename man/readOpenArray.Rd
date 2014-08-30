@@ -6,21 +6,19 @@
   the OpenArray software.
 }
 \usage{
-  readOpenArray(filename, fileFormat="default")
+  readOpenArray(filename)
 }
 \arguments{
-  \item{filename}{the name of the file containing the raw data}
-  \item{fileFormat}{the format of the raw data file. Current options are "default" or "LifeTech"}
+  \item{filename}{the name of the csv file containing the raw data exported from the LifeTech OpenArray software}
 }
 \value{
-  The function returns a data.frame in the format required by the
+  The function returns an object in the format required by the
   processQPCR function. 
 }
 \author{Alexander Baras and Matthew N. McCall}
 \examples{
   dat <- readOpenArray(
-             system.file("extdata/rawData.csv", package = "openArray"),
-             fileFormat="LifeTech" ) 
+             system.file("extdata/rawData.csv", package = "openArray"))
 }
 \keyword{manip}
 
