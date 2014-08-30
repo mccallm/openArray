@@ -34,26 +34,31 @@ processQPCR <- function(dat) {
   ## tranform to standard miRNA x sample matrix format
   cols <- u$Sample.Id
   tmp <- split(u,cols)
-  ## order each col by the Feature.Id
-  tmp <- lapply(tmp, function(x) x[order(x$Feature.Id),])
+  ## order each col by the Feature.Id and Feature.Set
+  tmp <- lapply(tmp, function(x) x[order(paste(x$Feature.Set,x$Feature.Id,sep="::")),])
   ## merge cols to create data matrices
-  e <- fc <- matrix(nrow=length(tmp[[1]]$Feature.Id),ncol=length(tmp))
+  e <- qc <- matrix(nrow=length(tmp[[1]]$Feature.Id),ncol=length(tmp))
   for(k in 1:ncol(e)){
     e[,k] <- tmp[[k]]$p3
-    fc[,k] <- tmp[[k]]$r2
+    qc[,k] <- tmp[[k]]$r2
   }
-  rownames(e) <- rownames(fc) <- tmp[[1]]$Feature.Id
-  colnames(e) <- colnames(fc) <- names(tmp)
+  rownames(e) <- rownames(qc) <- paste(tmp[[1]]$Feature.Set,tmp[[1]]$Feature.Id,sep="::")
+  colnames(e) <- colnames(qc) <- names(tmp)
   
   ## we may need to change this later to flag controls
   ft <- rep("Target",nrow(e))  
   
   fl <- matrix("Passed",nrow=nrow(e),ncol=ncol(e))
-  fl[which(fc<0.99,arr.ind=TRUE)] <- "Flagged"
+  fl[which(qc<0.99,arr.ind=TRUE)] <- "Flagged"
   colnames(fl) <- colnames(e)
   rownames(fl) <- rownames(e)
+
+  fc <- matrix("OK",nrow=nrow(e),ncol=ncol(e))
+  fc[which(is.na(e),arr.ind=TRUE)] <- "Undetermined"
+  colnames(fc) <- colnames(e)
+  rownames(fc) <- rownames(e)
   
-  obj <- new("qPCRset", exprs=e, flag=fl)
+  obj <- new("qPCRset", exprs=e, quality=qc, flag=fl)
   featureNames(obj) <- rownames(e)
   featureType(obj) <- ft
   featureCategory(obj) <- as.data.frame(fc)
