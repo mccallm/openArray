@@ -1,7 +1,7 @@
 readOpenArray <- function(filename) {
 
-  tmp <- readLines(filename, n=50)
-  iStart <- grep("\"Experiment Name\"",tmp)
+  tmp <- readLines(filename, n=50, encoding="C")
+  iStart <- grep("Experiment Name",tmp)[1]
     
   d <- read.table(filename, skip=iStart-1, header=TRUE, dec=".", sep=",", comment.char="")
   names(d)[names(d)=="Barcode"] <- "Chip.Id"
