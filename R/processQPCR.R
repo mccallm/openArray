@@ -42,9 +42,10 @@ processQPCR <- function(dat) {
     e[,k] <- tmp[[k]]$p3
     qc[,k] <- tmp[[k]]$r2
   }
-  rownames(e) <- rownames(qc) <- paste(tmp[[1]]$Feature.Set,tmp[[1]]$Feature.Id,sep="::")
+  ## deal with duplicate rownames by adding a number
+  rownames(e) <- rownames(qc) <- paste(1:nrow(e),tmp[[1]]$Feature.Set,tmp[[1]]$Feature.Id,sep="::")
   colnames(e) <- colnames(qc) <- names(tmp)
-  
+
   ## we may need to change this later to flag controls
   ft <- rep("Target",nrow(e))  
   
@@ -67,6 +68,10 @@ processQPCR <- function(dat) {
                     chipID=unlist(lapply(tmp,function(x) x$Chip.Id[1]))
   )
   phenoData(obj) <- AnnotatedDataFrame(data=tab)
+
+  setCtHistory(obj) <- data.frame(
+      history = "Cq values using a curve fitting algorithm from the openArray package.",
+      stringsAsFactors = FALSE)
   
   return(obj)
 }
